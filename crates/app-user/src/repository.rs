@@ -12,7 +12,8 @@ type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 ///
 /// Uses boxed futures to be dyn-compatible (`Arc<dyn UserRepository>`).
 pub trait UserRepository: Send + Sync {
-    fn find_all(&self) -> BoxFuture<'_, Result<Vec<User>, sqlx::Error>>;
+    fn find_all(&self, limit: i64, offset: i64) -> BoxFuture<'_, Result<Vec<User>, sqlx::Error>>;
+    fn count_all(&self) -> BoxFuture<'_, Result<i64, sqlx::Error>>;
     fn find_by_id(&self, id: Uuid) -> BoxFuture<'_, Result<Option<User>, sqlx::Error>>;
     fn find_by_email(&self, email: &str) -> BoxFuture<'_, Result<Option<User>, sqlx::Error>>;
     fn create(&self, name: &str, email: &str) -> BoxFuture<'_, Result<User, sqlx::Error>>;
@@ -37,11 +38,24 @@ impl PgUserRepository {
 }
 
 impl UserRepository for PgUserRepository {
-    fn find_all(&self) -> BoxFuture<'_, Result<Vec<User>, sqlx::Error>> {
+    fn find_all(&self, limit: i64, offset: i64) -> BoxFuture<'_, Result<Vec<User>, sqlx::Error>> {
         Box::pin(async move {
-            sqlx::query_as::<_, User>("SELECT * FROM users ORDER BY created_at DESC")
-                .fetch_all(&self.pool)
-                .await
+            sqlx::query_as::<_, User>(
+                "SELECT * FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+            )
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await
+        })
+    }
+
+    fn count_all(&self) -> BoxFuture<'_, Result<i64, sqlx::Error>> {
+        Box::pin(async move {
+            let row: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM users")
+                .fetch_one(&self.pool)
+                .await?;
+            Ok(row.0)
         })
     }
 
