@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use uuid::Uuid;
 use validator::Validate;
 
@@ -38,5 +39,13 @@ impl From<User> for UserResponse {
             created_at: user.created_at.to_rfc3339(),
             updated_at: user.updated_at.to_rfc3339(),
         }
+    }
+}
+
+impl UserResponse {
+    /// Convert to a generic JSON value for flexible serialization.
+    #[must_use]
+    pub fn to_value(&self) -> Value {
+        serde_json::to_value(self).unwrap_or_default()
     }
 }

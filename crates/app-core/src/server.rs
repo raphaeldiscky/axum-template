@@ -5,9 +5,6 @@ use axum::response::IntoResponse;
 use sqlx::PgPool;
 use tokio::signal;
 
-/// Liveness probe — always returns ok.
-///
-/// Axum requires handler functions to be async.
 #[allow(clippy::unused_async)]
 pub async fn liveness() -> impl IntoResponse {
     Json(serde_json::json!({"status": "ok"}))

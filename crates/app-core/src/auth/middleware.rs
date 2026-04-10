@@ -1,6 +1,9 @@
 use axum::extract::Request;
 use axum::middleware::Next;
 use axum::response::Response;
+use axum_extra::TypedHeader;
+use axum_extra::headers::Authorization;
+use axum_extra::headers::authorization::Bearer;
 
 use crate::auth::jwt;
 use crate::error::AppError;
@@ -15,28 +18,20 @@ use crate::error::AppError;
 /// use axum::middleware;
 /// let protected = Router::new()
 ///     .route("/me", get(me_handler))
-///     .layer(middleware::from_fn_with_state(state.clone(), auth_middleware));
+///     .layer(middleware::from_fn(auth_middleware));
 /// ```
-pub async fn auth_middleware(request: Request, next: Next) -> Result<Response, AppError> {
-    let auth_header = request
-        .headers()
-        .get("Authorization")
-        .and_then(|v| v.to_str().ok())
-        .ok_or(AppError::Unauthorized)?;
-
-    let token = auth_header
-        .strip_prefix("Bearer ")
-        .ok_or(AppError::Unauthorized)?;
-
-    // Extract JWT secret from request extensions (set by the state layer).
+pub async fn auth_middleware(
+    TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
+    mut request: Request,
+    next: Next,
+) -> Result<Response, AppError> {
     let jwt_secret = request
         .extensions()
         .get::<JwtSecret>()
         .ok_or(AppError::Unauthorized)?;
 
-    let claims = jwt::decode(&jwt_secret.0, token).map_err(|_| AppError::Unauthorized)?;
+    let claims = jwt::decode(&jwt_secret.0, auth.token()).map_err(|_| AppError::Unauthorized)?;
 
-    let mut request = request;
     request.extensions_mut().insert(claims);
 
     Ok(next.run(request).await)

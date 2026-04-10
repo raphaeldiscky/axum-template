@@ -1,10 +1,11 @@
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, errors::Error as JwtError};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
     /// Subject (user ID).
-    pub sub: String,
+    pub sub: Uuid,
     /// Email address.
     pub email: String,
     /// Expiration time (UTC timestamp).
@@ -34,12 +35,18 @@ pub fn decode(secret: &str, token: &str) -> Result<Claims, JwtError> {
 mod tests {
     use super::*;
 
+    fn test_user_id() -> Uuid {
+        Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").expect("valid uuid")
+    }
+
+    #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
     fn sample_claims() -> Claims {
+        let now = chrono::Utc::now();
         Claims {
-            sub: "user-123".to_string(),
+            sub: test_user_id(),
             email: "test@example.com".to_string(),
-            exp: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp() as usize,
-            iat: chrono::Utc::now().timestamp() as usize,
+            exp: (now + chrono::Duration::hours(1)).timestamp() as usize,
+            iat: now.timestamp() as usize,
         }
     }
 
@@ -51,7 +58,7 @@ mod tests {
         let token = encode(secret, &claims).expect("failed to encode");
         let decoded = decode(secret, &token).expect("failed to decode");
 
-        assert_eq!(decoded.sub, "user-123");
+        assert_eq!(decoded.sub, test_user_id());
         assert_eq!(decoded.email, "test@example.com");
     }
 
@@ -68,9 +75,9 @@ mod tests {
     fn decode_expired_token_fails() {
         let secret = "test-secret";
         let claims = Claims {
-            sub: "user-123".to_string(),
+            sub: test_user_id(),
             email: "test@example.com".to_string(),
-            exp: 0, // expired
+            exp: 0,
             iat: 0,
         };
 
