@@ -1,6 +1,7 @@
 use std::future::Future;
 use std::pin::Pin;
 
+use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -12,7 +13,11 @@ type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 ///
 /// Uses boxed futures to be dyn-compatible (`Arc<dyn UserRepository>`).
 pub trait UserRepository: Send + Sync {
-    fn find_all(&self) -> BoxFuture<'_, Result<Vec<User>, sqlx::Error>>;
+    fn find_all(
+        &self,
+        limit: i64,
+        cursor: Option<(DateTime<Utc>, Uuid)>,
+    ) -> BoxFuture<'_, Result<Vec<User>, sqlx::Error>>;
     fn find_by_id(&self, id: Uuid) -> BoxFuture<'_, Result<Option<User>, sqlx::Error>>;
     fn find_by_email(&self, email: &str) -> BoxFuture<'_, Result<Option<User>, sqlx::Error>>;
     fn create(&self, name: &str, email: &str) -> BoxFuture<'_, Result<User, sqlx::Error>>;
@@ -37,11 +42,37 @@ impl PgUserRepository {
 }
 
 impl UserRepository for PgUserRepository {
-    fn find_all(&self) -> BoxFuture<'_, Result<Vec<User>, sqlx::Error>> {
+    fn find_all(
+        &self,
+        limit: i64,
+        cursor: Option<(DateTime<Utc>, Uuid)>,
+    ) -> BoxFuture<'_, Result<Vec<User>, sqlx::Error>> {
         Box::pin(async move {
-            sqlx::query_as::<_, User>("SELECT * FROM users ORDER BY created_at DESC")
-                .fetch_all(&self.pool)
-                .await
+            match cursor {
+                Some((created_at, id)) => {
+                    sqlx::query_as::<_, User>(
+                        "SELECT * FROM users \
+                         WHERE (created_at, id) < ($2, $3) \
+                         ORDER BY created_at DESC, id DESC \
+                         LIMIT $1",
+                    )
+                    .bind(limit)
+                    .bind(created_at)
+                    .bind(id)
+                    .fetch_all(&self.pool)
+                    .await
+                }
+                None => {
+                    sqlx::query_as::<_, User>(
+                        "SELECT * FROM users \
+                         ORDER BY created_at DESC, id DESC \
+                         LIMIT $1",
+                    )
+                    .bind(limit)
+                    .fetch_all(&self.pool)
+                    .await
+                }
+            }
         })
     }
 

@@ -3,6 +3,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use app_core::error::AppError;
+use app_core::pagination::{CursorData, CursorPagination, CursorParams};
 
 use crate::dto::{CreateUserRequest, UpdateUserRequest, UserResponse};
 use crate::error::UserError;
@@ -18,9 +19,30 @@ impl UserService {
         Self { repo }
     }
 
-    pub async fn list_users(&self) -> Result<Vec<UserResponse>, AppError> {
-        let users = self.repo.find_all().await?;
-        Ok(users.into_iter().map(UserResponse::from).collect())
+    pub async fn list_users(
+        &self,
+        params: CursorParams,
+    ) -> Result<(Vec<UserResponse>, CursorPagination), AppError> {
+        let params = params.clamp();
+        let cursor = params
+            .cursor
+            .as_deref()
+            .and_then(CursorData::decode)
+            .map(|c| (c.created_at, c.id));
+
+        // Fetch limit + 1 to detect if there are more results.
+        let mut users = self.repo.find_all(params.limit + 1, cursor).await?;
+
+        let pagination =
+            CursorPagination::from_results(&mut users, params.limit, |user| CursorData {
+                id: user.id,
+                created_at: user.created_at,
+            });
+
+        Ok((
+            users.into_iter().map(UserResponse::from).collect(),
+            pagination,
+        ))
     }
 
     pub async fn get_user(&self, id: Uuid) -> Result<UserResponse, AppError> {

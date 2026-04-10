@@ -3,5 +3,7 @@ pub mod config;
 pub mod db;
 pub mod error;
 pub mod observability;
+pub mod pagination;
+pub mod response;
 pub mod server;
 pub mod validation;
