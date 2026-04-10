@@ -33,8 +33,17 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
-      - name: Install Dependencies
-        run: task install_tools
+      - name: Install Node Dependencies
+        run: pnpm install
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@nextest
+
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@cargo-deny
+
+      - name: Install cargo-machete
+        uses: taiki-e/install-action@cargo-machete
 
       - name: Format Check
         run: cargo fmt --all -- --check
