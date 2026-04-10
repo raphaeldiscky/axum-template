@@ -25,9 +25,14 @@ tasks:
       - docker compose -f {{.INFRA_DC_FILE}} down
 
   test:
-    desc: Run tests
+    desc: Run unit tests
     cmds:
-      - cargo nextest run --workspace
+      - cargo nextest run --workspace --lib
+
+  test:integration:
+    desc: Run integration tests (requires Docker)
+    cmds:
+      - cargo nextest run --workspace --test '*'
 
   test:doc:
     desc: Run doc tests (not supported by nextest)

@@ -1,80 +1,47 @@
 <h1 align="center">Axum Template</h1>
 
-A scalable Axum web API template structured as a Cargo workspace for microservices, with Clean Architecture, PostgreSQL, JWT auth, input validation, and pre-configured tooling.
+A Cargo workspace template for building Axum microservices with Clean Architecture, PostgreSQL, and pre-configured tooling.
 
 ## Quick Start
 
-Install project tools and dependencies:
-
 ```sh
-task install_tools
+task install_tools        # install Rust/Node tools
+task start_infra          # start PostgreSQL
+task db:migrate           # run migrations
+cargo run -p user-service # start server
 ```
 
-Start PostgreSQL and run migrations:
-
-```sh
-task db:up
-task db:migrate
-```
-
-Run the server:
-
-```sh
-cargo run -p user-service
-```
-
-## Workspace Structure
+## Structure
 
 ```
 crates/
-  app-core/          Shared infrastructure (config, error, db, auth, validation)
-  app-user/          User domain (entity, dto, repository, service, handler, routes)
+  app-core/       Shared infrastructure (config, error, db, auth, validation)
+  app-user/       User domain (entity, dto, repository, service, handler, routes)
+  app-testing/    Testcontainers helpers for integration tests
 services/
-  user-service/      Binary entrypoint
+  user-service/   Binary entrypoint
+deployments/
+  docker-compose/ Infrastructure (PostgreSQL)
 ```
 
-Each domain crate follows **Clean Architecture** layers:
+## Adding a New Service
 
-```
-entity      → Domain model (sqlx::FromRow)
-dto         → Request/response types with validation
-repository  → Trait + PostgreSQL implementation
-service     → Business logic (holds Arc<dyn Repository>)
-handler     → Axum handlers
-routes      → Router composition with FromRef bounds
-```
-
-## API Endpoints
-
-| Method | Path            | Description                   |
-| ------ | --------------- | ----------------------------- |
-| GET    | /healthz        | Liveness check                |
-| GET    | /readyz         | Readiness check (verifies DB) |
-| GET    | /api/users      | List all users                |
-| POST   | /api/users      | Create a user                 |
-| GET    | /api/users/{id} | Get a user                    |
-| PUT    | /api/users/{id} | Update a user                 |
-| DELETE | /api/users/{id} | Delete a user                 |
-
-## Adding a New Microservice
-
-1. Create `crates/app-<domain>/` — entity, dto, repository, service, handler, routes, migrations
-2. Create `services/<name>/` — thin binary with AppState + main.rs
+1. Create `crates/app-<domain>/` with entity, dto, repository, service, handler, routes, migrations
+2. Create `services/<name>/` with `AppState` + `main.rs`
 3. Add both to `[workspace.members]` in root `Cargo.toml`
-4. Add docker-compose service if a new database is needed
 
-## Configuration
+## Commands
 
-All configuration is via environment variables (see `.env.example`):
-
-| Variable               | Default                                                  | Description                  |
-| ---------------------- | -------------------------------------------------------- | ---------------------------- |
-| `HOST`                 | 0.0.0.0                                                  | Server bind address          |
-| `PORT`                 | 7000                                                     | Server port                  |
-| `DATABASE_URL`         | postgres://postgres:postgres@localhost:5432/user_service | PostgreSQL connection string |
-| `JWT_SECRET`           | dev-secret-change-in-production                          | JWT signing secret           |
-| `JWT_EXPIRATION_HOURS` | 24                                                       | JWT token lifetime           |
-| `RUST_LOG`             | info                                                     | Tracing filter               |
+| Command            | Description               |
+| ------------------ | ------------------------- |
+| `task start_infra` | Start infrastructure      |
+| `task stop_infra`  | Stop infrastructure       |
+| `task db:migrate`  | Run migrations            |
+| `task db:rollback` | Rollback migrations       |
+| `task build`       | Build all crates          |
+| `task test`        | Run tests                 |
+| `task lint`        | Format + clippy           |
+| `task deny`        | Security & license checks |
 
 ## Technologies & Libraries
 
@@ -88,6 +55,7 @@ All configuration is via environment variables (see `.env.example`):
 - **[Keats/jsonwebtoken](https://github.com/Keats/jsonwebtoken)** - JWT encoding and decoding
 - **[SergioBenitez/Figment](https://github.com/SergioBenitez/Figment)** - Layered configuration system
 - **[allan2/dotenvy](https://github.com/allan2/dotenvy)** - Environment variable loading from .env files
+- **[testcontainers/testcontainers-rs](https://github.com/testcontainers/testcontainers-rs)** - Docker-based integration testing
 - **[rust-lang/rustfmt](https://github.com/rust-lang/rustfmt)** - Rust code formatter
 - **[rust-lang/rust-clippy](https://github.com/rust-lang/rust-clippy)** - Rust linter with pedantic, nursery, and cargo lint groups
 - **[nextest-rs/nextest](https://github.com/nextest-rs/nextest)** - Next-generation test runner for Rust
