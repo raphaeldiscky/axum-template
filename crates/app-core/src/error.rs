@@ -76,3 +76,53 @@ impl From<sqlx::Error> for AppError {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use axum::response::IntoResponse;
+
+    use super::*;
+
+    fn status_of(err: AppError) -> StatusCode {
+        err.into_response().status()
+    }
+
+    #[test]
+    fn not_found_returns_404() {
+        assert_eq!(status_of(AppError::NotFound), StatusCode::NOT_FOUND);
+    }
+
+    #[test]
+    fn conflict_returns_409() {
+        assert_eq!(
+            status_of(AppError::Conflict("dup".into())),
+            StatusCode::CONFLICT
+        );
+    }
+
+    #[test]
+    fn validation_returns_422() {
+        assert_eq!(
+            status_of(AppError::Validation(vec![])),
+            StatusCode::UNPROCESSABLE_ENTITY
+        );
+    }
+
+    #[test]
+    fn unauthorized_returns_401() {
+        assert_eq!(status_of(AppError::Unauthorized), StatusCode::UNAUTHORIZED);
+    }
+
+    #[test]
+    fn forbidden_returns_403() {
+        assert_eq!(status_of(AppError::Forbidden), StatusCode::FORBIDDEN);
+    }
+
+    #[test]
+    fn bad_request_returns_400() {
+        assert_eq!(
+            status_of(AppError::BadRequest("bad".into())),
+            StatusCode::BAD_REQUEST
+        );
+    }
+}

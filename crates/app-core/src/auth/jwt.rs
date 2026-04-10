@@ -29,3 +29,54 @@ pub fn decode(secret: &str, token: &str) -> Result<Claims, JwtError> {
     )?;
     Ok(token_data.claims)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_claims() -> Claims {
+        Claims {
+            sub: "user-123".to_string(),
+            email: "test@example.com".to_string(),
+            exp: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp() as usize,
+            iat: chrono::Utc::now().timestamp() as usize,
+        }
+    }
+
+    #[test]
+    fn encode_and_decode_roundtrip() {
+        let secret = "test-secret";
+        let claims = sample_claims();
+
+        let token = encode(secret, &claims).expect("failed to encode");
+        let decoded = decode(secret, &token).expect("failed to decode");
+
+        assert_eq!(decoded.sub, "user-123");
+        assert_eq!(decoded.email, "test@example.com");
+    }
+
+    #[test]
+    fn decode_with_wrong_secret_fails() {
+        let claims = sample_claims();
+        let token = encode("correct-secret", &claims).expect("failed to encode");
+        let result = decode("wrong-secret", &token);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn decode_expired_token_fails() {
+        let secret = "test-secret";
+        let claims = Claims {
+            sub: "user-123".to_string(),
+            email: "test@example.com".to_string(),
+            exp: 0, // expired
+            iat: 0,
+        };
+
+        let token = encode(secret, &claims).expect("failed to encode");
+        let result = decode(secret, &token);
+
+        assert!(result.is_err());
+    }
+}
