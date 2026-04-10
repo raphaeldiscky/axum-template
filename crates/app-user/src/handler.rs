@@ -4,7 +4,7 @@ use axum::response::IntoResponse;
 use uuid::Uuid;
 
 use app_core::error::AppError;
-use app_core::pagination::PaginationParams;
+use app_core::pagination::CursorParams;
 use app_core::response::ApiResponse;
 use app_core::validation::ValidatedJson;
 
@@ -13,7 +13,7 @@ use crate::service::UserService;
 
 pub async fn list(
     State(service): State<UserService>,
-    Query(params): Query<PaginationParams>,
+    Query(params): Query<CursorParams>,
 ) -> Result<impl IntoResponse, AppError> {
     let (users, pagination) = service.list_users(params).await?;
     Ok(ApiResponse::with_pagination(users, pagination))

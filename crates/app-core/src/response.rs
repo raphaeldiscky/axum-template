@@ -3,7 +3,7 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 
-use crate::pagination::OffsetPagination;
+use crate::pagination::CursorPagination;
 
 /// Consistent API response envelope.
 ///
@@ -15,13 +15,12 @@ pub struct ApiResponse<T> {
     pub message: String,
     pub data: T,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub pagination: Option<OffsetPagination>,
+    pub pagination: Option<CursorPagination>,
     #[serde(skip)]
     status: u16,
 }
 
 impl<T: Serialize> ApiResponse<T> {
-    /// 200 OK with data.
     pub fn ok(data: T) -> Self {
         Self {
             message: "Success".to_string(),
@@ -31,7 +30,6 @@ impl<T: Serialize> ApiResponse<T> {
         }
     }
 
-    /// 201 Created with data.
     pub fn created(data: T) -> Self {
         Self {
             message: "Created".to_string(),
@@ -41,8 +39,7 @@ impl<T: Serialize> ApiResponse<T> {
         }
     }
 
-    /// 200 OK with data and pagination metadata.
-    pub fn with_pagination(data: T, pagination: OffsetPagination) -> Self {
+    pub fn with_pagination(data: T, pagination: CursorPagination) -> Self {
         Self {
             message: "Success".to_string(),
             data,

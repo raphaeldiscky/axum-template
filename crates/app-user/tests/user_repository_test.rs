@@ -51,14 +51,16 @@ async fn find_all() {
     repo.create("User1", "user1@example.com").await.unwrap();
     repo.create("User2", "user2@example.com").await.unwrap();
 
-    let users = repo.find_all(10, 0).await.expect("find_all failed");
+    // First page: no cursor
+    let users = repo.find_all(10, None).await.expect("find_all failed");
     assert_eq!(users.len(), 2);
 
-    let count = repo.count_all().await.expect("count_all failed");
-    assert_eq!(count, 2);
-
-    // Pagination: limit 1, offset 1 returns second user only.
-    let page2 = repo.find_all(1, 1).await.expect("find_all page2 failed");
+    // Cursor to second item
+    let first = &users[0];
+    let page2 = repo
+        .find_all(10, Some((first.created_at, first.id)))
+        .await
+        .expect("find_all with cursor failed");
     assert_eq!(page2.len(), 1);
 }
 
