@@ -1,17 +1,80 @@
-[package]
-name = "rs-template"
-version = "0.1.0"
-edition = "2024"
-description = "A simple Rust project template"
-license = "MIT"
-repository = "https://github.com/raphaeldiscky/rs-template"
-keywords = ["template"]
-categories = ["development-tools"]
+[workspace]
+resolver = "3"
+members = [
+    "crates/app-core",
+    "crates/app-testing",
+    "crates/app-user",
+    "services/user-service",
+]
 
-[lints.rust]
+[workspace.package]
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/raphaeldiscky/axum-template"
+
+[workspace.dependencies]
+# Web framework
+axum = "0.8"
+axum-extra = { version = "0.10", features = ["typed-header"] }
+tokio = { version = "1", features = ["full"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = [
+    "cors",
+    "compression-zstd",
+    "trace",
+    "timeout",
+    "request-id",
+    "propagate-header",
+] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Error handling
+thiserror = "2"
+anyhow = "1"
+
+# Database
+sqlx = { version = "0.8", features = [
+    "runtime-tokio-rustls",
+    "postgres",
+    "uuid",
+    "chrono",
+    "migrate",
+] }
+
+# Auth
+jsonwebtoken = "9"
+
+# Validation
+validator = { version = "0.20", features = ["derive"] }
+
+# Configuration
+figment = { version = "0.10", features = ["env", "toml"] }
+
+# Observability
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Utilities
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+dotenvy = "0.15"
+
+# Testing
+testcontainers = "0.27"
+testcontainers-modules = { version = "0.15", features = ["postgres"] }
+
+# Internal crates
+app-core = { path = "crates/app-core" }
+app-testing = { path = "crates/app-testing" }
+app-user = { path = "crates/app-user" }
+
+[workspace.lints.rust]
 unsafe_code = "forbid"
 
-[lints.clippy]
+[workspace.lints.clippy]
 all = { level = "warn", priority = -1 }
 pedantic = { level = "warn", priority = -1 }
 nursery = { level = "warn", priority = -1 }
@@ -22,6 +85,8 @@ module_name_repetitions = "allow"
 must_use_candidate = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
+multiple_crate_versions = "allow"
+cargo_common_metadata = "allow"
 
 # Strictness
 unwrap_used = "deny"

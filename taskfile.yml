@@ -1,5 +1,11 @@
 version: "3"
 
+vars:
+  GOOS: "{{default OS .GOOS}}"
+  DC_DIR: deployments/docker-compose
+  INFRA_DC_FILE: "{{.DC_DIR}}/infra.yaml"
+  SLEEP_CMD: '{{if eq .GOOS "windows"}}timeout{{else}}sleep{{end}}'
+
 tasks:
   install_tools:
     desc: Install all dependencies for the project
@@ -7,25 +13,36 @@ tasks:
       - chmod +x ./scripts/install-tools.sh
       - ./scripts/install-tools.sh
 
+  start_infra:
+    desc: Start local infrastructure using docker compose
+    cmds:
+      - docker network create --driver bridge axum-template || true
+      - docker compose -f {{.INFRA_DC_FILE}} up -d
+
+  stop_infra:
+    desc: Stop local infrastructure using docker compose
+    cmds:
+      - docker compose -f {{.INFRA_DC_FILE}} down
+
   test:
     desc: Run tests
     cmds:
-      - cargo nextest run
+      - cargo nextest run --workspace
 
   test:doc:
     desc: Run doc tests (not supported by nextest)
     cmds:
-      - cargo test --doc
+      - cargo test --workspace --doc
 
   format:
     desc: Run formatter
     cmds:
-      - cargo fmt
+      - cargo fmt --all
 
   lint:
     desc: Run linter
     cmds:
-      - cargo clippy -- -D warnings
+      - cargo clippy --workspace -- -D warnings
     deps: [format]
 
   deny:
@@ -41,4 +58,41 @@ tasks:
   build:
     desc: Build the project
     cmds:
-      - cargo build
+      - cargo build --workspace
+
+  db:up:
+    desc: Start PostgreSQL via Docker Compose
+    cmds:
+      - docker compose -f {{.DC_DIR}}/postgres.yaml up -d
+
+  db:down:
+    desc: Stop PostgreSQL via Docker Compose
+    cmds:
+      - docker compose -f {{.DC_DIR}}/postgres.yaml down
+
+  db:migrate:
+    desc: Run database migrations
+    vars:
+      SERVICE: '{{.SERVICE | default ""}}'
+    cmds:
+      - bash ./scripts/migrate.sh up {{.SERVICE}}
+
+  db:rollback:
+    desc: Rollback database migrations
+    vars:
+      SERVICE: '{{.SERVICE | default ""}}'
+    cmds:
+      - bash ./scripts/migrate.sh down {{.SERVICE}}
+
+  docker:build:
+    desc: Build Docker image for a service
+    vars:
+      SERVICE: '{{.SERVICE | default "user-service"}}'
+    cmds:
+      - docker build -t {{.SERVICE}} -f services/{{.SERVICE}}/Dockerfile .
+
+  sleep:
+    vars:
+      DURATION: "{{default 5 .DURATION}}"
+    cmds:
+      - "{{.SLEEP_CMD}} {{.DURATION}}"

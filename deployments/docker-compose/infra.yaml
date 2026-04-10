@@ -1,0 +1,10 @@
+name: axum-template
+
+# Local infrastructure services
+include:
+  - postgres.yaml
+
+networks:
+  axum-template:
+    name: axum-template
+    external: true

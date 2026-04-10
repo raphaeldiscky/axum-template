@@ -8,6 +8,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -36,7 +37,7 @@ jobs:
         run: task install_tools
 
       - name: Format Check
-        run: cargo fmt -- --check
+        run: cargo fmt --all -- --check
 
       - name: Lint
         run: task lint
@@ -51,4 +52,4 @@ jobs:
         run: task test
 
       - name: Build Check
-        run: cargo build
+        run: task build

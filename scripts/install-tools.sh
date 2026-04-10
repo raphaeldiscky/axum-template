@@ -24,6 +24,14 @@ else
     echo "cargo-machete already installed"
 fi
 
+# database CLI
+if ! command -v sqlx &> /dev/null; then
+    echo "Installing sqlx-cli..."
+    cargo install sqlx-cli --locked --no-default-features --features postgres
+else
+    echo "sqlx-cli already installed"
+fi
+
 # install node.js tools
 pnpm install
 

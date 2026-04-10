@@ -13,6 +13,9 @@ node_modules/
 *~
 .claude/
 
+# Environment
+.env
+
 # OS
 .DS_Store
 Thumbs.db
