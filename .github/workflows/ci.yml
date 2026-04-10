@@ -1,0 +1,54 @@
+name: CI
+
+on: [push]
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: clippy, rustfmt
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install Dependencies
+        run: task install_tools
+
+      - name: Format Check
+        run: cargo fmt -- --check
+
+      - name: Lint
+        run: task lint
+
+      - name: Deny Check
+        run: task deny
+
+      - name: Unused Deps Check
+        run: task unused_deps
+
+      - name: Test
+        run: task test
+
+      - name: Build Check
+        run: cargo build

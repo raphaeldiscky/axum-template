@@ -1,0 +1,27 @@
+[package]
+name = "rs-template"
+version = "0.1.0"
+edition = "2024"
+description = "A simple Rust project template"
+license = "MIT"
+repository = "https://github.com/raphaeldiscky/rs-template"
+keywords = ["template"]
+categories = ["development-tools"]
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+cargo = { level = "warn", priority = -1 }
+
+# Noisy pedantic lints
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+
+# Strictness
+unwrap_used = "deny"

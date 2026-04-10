@@ -1,0 +1,44 @@
+version: "3"
+
+tasks:
+  install_tools:
+    desc: Install all dependencies for the project
+    cmds:
+      - chmod +x ./scripts/install-tools.sh
+      - ./scripts/install-tools.sh
+
+  test:
+    desc: Run tests
+    cmds:
+      - cargo nextest run
+
+  test:doc:
+    desc: Run doc tests (not supported by nextest)
+    cmds:
+      - cargo test --doc
+
+  format:
+    desc: Run formatter
+    cmds:
+      - cargo fmt
+
+  lint:
+    desc: Run linter
+    cmds:
+      - cargo clippy -- -D warnings
+    deps: [format]
+
+  deny:
+    desc: Run security and license checks
+    cmds:
+      - cargo deny check
+
+  unused_deps:
+    desc: Check for unused dependencies
+    cmds:
+      - cargo machete
+
+  build:
+    desc: Build the project
+    cmds:
+      - cargo build
