@@ -19,7 +19,6 @@ use app_user::service::UserService;
 
 #[derive(Clone, FromRef)]
 struct AppState {
-    #[allow(dead_code)]
     config: AppConfig,
     pool: PgPool,
     user_service: UserService,

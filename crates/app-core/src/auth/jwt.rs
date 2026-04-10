@@ -35,11 +35,15 @@ mod tests {
     use super::*;
 
     fn sample_claims() -> Claims {
+        let now = chrono::Utc::now();
+        let exp = usize::try_from((now + chrono::Duration::hours(1)).timestamp())
+            .expect("timestamp must be positive");
+        let iat = usize::try_from(now.timestamp()).expect("timestamp must be positive");
         Claims {
             sub: "user-123".to_string(),
             email: "test@example.com".to_string(),
-            exp: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp() as usize,
-            iat: chrono::Utc::now().timestamp() as usize,
+            exp,
+            iat,
         }
     }
 
