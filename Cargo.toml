@@ -89,5 +89,9 @@ missing_panics_doc = "allow"
 multiple_crate_versions = "allow"
 cargo_common_metadata = "allow"
 
+# Suggested replacement (`Duration::from_mins`) is gated behind the unstable
+# `duration_constructors_lite` feature, so this lint is not actionable yet.
+duration_suboptimal_units = "allow"
+
 # Strictness
 unwrap_used = "deny"
