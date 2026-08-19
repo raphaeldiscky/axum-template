@@ -15,10 +15,10 @@ repository = "https://github.com/raphaeldiscky/axum-template"
 [workspace.dependencies]
 # Web framework
 axum = "0.8"
-axum-extra = { version = "0.10", features = ["typed-header"] }
+axum-extra = { version = "0.12", features = ["typed-header"] }
 tokio = { version = "1", features = ["full"] }
 tower = "0.5"
-tower-http = { version = "0.6", features = [
+tower-http = { version = "0.7", features = [
     "cors",
     "compression-zstd",
     "trace",
@@ -36,8 +36,9 @@ thiserror = "2"
 anyhow = "1"
 
 # Database
-sqlx = { version = "0.8", features = [
-    "runtime-tokio-rustls",
+sqlx = { version = "0.9", features = [
+    "runtime-tokio",
+    "tls-rustls",
     "postgres",
     "uuid",
     "chrono",
@@ -45,10 +46,13 @@ sqlx = { version = "0.8", features = [
 ] }
 
 # Auth
-jsonwebtoken = "9"
+# v11 has no default crypto backend. `aws_lc_rs` over `rust_crypto`: the latter
+# pulls the pure-Rust `rsa` crate, which carries RUSTSEC-2023-0071 (Marvin
+# attack) and fails `task security`.
+jsonwebtoken = { version = "11", features = ["aws_lc_rs"] }
 
 # Validation
-validator = { version = "0.20", features = ["derive"] }
+validator = { version = "0.21", features = ["derive"] }
 
 # Configuration
 figment = { version = "0.10", features = ["env", "toml"] }
@@ -60,7 +64,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # Utilities
 uuid = { version = "1", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
-base64 = "0.22"
+base64 = "0.23"
 dotenvy = "0.15"
 
 # Testing

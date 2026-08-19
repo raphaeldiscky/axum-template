@@ -1,8 +1,8 @@
 use std::path::Path;
 use std::time::Duration;
 
-use sqlx::PgPool;
 use sqlx::postgres::PgPoolOptions;
+use sqlx::{AssertSqlSafe, PgPool};
 use testcontainers::ContainerAsync;
 use testcontainers::ImageExt;
 use testcontainers::runners::AsyncRunner;
@@ -102,7 +102,9 @@ impl PostgresContainer {
             for file in files {
                 let sql = tokio::fs::read_to_string(&file).await?;
                 tracing::info!("Running migration: {}", file.display());
-                sqlx::query(&sql).execute(&self.pool).await?;
+                // Audited (sqlx 0.9 `SqlSafeStr`): `sql` is the contents of a migration
+                // file checked into the repo, not untrusted input.
+                sqlx::query(AssertSqlSafe(sql)).execute(&self.pool).await?;
             }
         }
         Ok(())

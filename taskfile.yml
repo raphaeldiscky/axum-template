@@ -13,6 +13,23 @@ tasks:
       - chmod +x ./scripts/install-tools.sh
       - ./scripts/install-tools.sh
 
+  sync:
+    desc: Install the exact dependencies in the lockfiles (run after cloning or pulling)
+    cmds:
+      - cargo fetch --locked
+      - pnpm install --frozen-lockfile
+
+  upgrade:
+    desc: Upgrade all dependencies to their latest versions and update the lockfiles
+    cmds:
+      - cargo update
+      - pnpm update --latest
+
+  run_ci:
+    desc: Run the CI pipeline locally
+    cmds:
+      - act -n
+
   start_infra:
     desc: Start local infrastructure using docker compose
     cmds:
@@ -50,10 +67,15 @@ tasks:
       - cargo clippy --workspace -- -D warnings
     deps: [format]
 
-  deny:
+  security:
     desc: Run security and license checks
     cmds:
       - cargo deny check
+
+  deadcode:
+    desc: Check for dead code
+    cmds:
+      - cargo clippy --workspace --all-targets -- -D dead_code -D unused_imports
 
   unused_deps:
     desc: Check for unused dependencies

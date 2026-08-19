@@ -2,21 +2,24 @@ name: CI
 
 on: [push]
 
-env:
-  NODE_VERSION: "20"
-
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+      # Installs rust, node and pnpm from .prototools — the single source of
+      # truth for every toolchain version in this repo.
+      - name: Setup Toolchain
+        uses: moonrepo/setup-toolchain@v0
         with:
-          components: clippy, rustfmt
+          auto-install: true
+
+      # proto installs Rust natively via rustup, into ~/.cargo/bin, but only
+      # puts its own shim dirs on PATH.
+      - name: Add Cargo to PATH
+        run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
       - name: Install Task
         uses: arduino/setup-task@v2
@@ -24,17 +27,16 @@ jobs:
           version: 3.x
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Cache Cargo
+        uses: actions/cache@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
-      - name: Install Node Dependencies
-        run: pnpm install
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
 
       - name: Install cargo-nextest
         uses: taiki-e/install-action@nextest
@@ -45,14 +47,20 @@ jobs:
       - name: Install cargo-machete
         uses: taiki-e/install-action@cargo-machete
 
+      - name: Install Dependencies
+        run: task sync
+
       - name: Format Check
         run: cargo fmt --all -- --check
 
       - name: Lint
         run: task lint
 
-      - name: Deny Check
-        run: task deny
+      - name: Dead Code Check
+        run: task deadcode
+
+      - name: Security Check
+        run: task security
 
       - name: Unused Deps Check
         run: task unused_deps

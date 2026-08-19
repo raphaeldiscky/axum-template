@@ -19,3 +19,6 @@ node_modules/
 # OS
 .DS_Store
 Thumbs.db
+
+# pnpm falls back to a project-local store when no global one is configured
+.pnpm-store/

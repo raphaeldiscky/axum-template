@@ -5,6 +5,7 @@ A Cargo workspace template for building Axum microservices with Clean Architectu
 ## Quick Start
 
 ```sh
+proto use                 # install every toolchain pinned in .prototools
 task install_tools        # install Rust/Node tools
 task start_infra          # start PostgreSQL
 task db:migrate           # run migrations
@@ -32,16 +33,30 @@ deployments/
 
 ## Commands
 
-| Command            | Description               |
-| ------------------ | ------------------------- |
-| `task start_infra` | Start infrastructure      |
-| `task stop_infra`  | Stop infrastructure       |
-| `task db:migrate`  | Run migrations            |
-| `task db:rollback` | Rollback migrations       |
-| `task build`       | Build all crates          |
-| `task test`        | Run tests                 |
-| `task lint`        | Format + clippy           |
-| `task deny`        | Security & license checks |
+| Command                 | Description                            |
+| ----------------------- | -------------------------------------- |
+| `task install_tools`    | Install tools, dependencies, git hooks |
+| `task sync`             | Install exact deps from the lockfiles  |
+| `task upgrade`          | Upgrade all deps to latest             |
+| `task start_infra`      | Start infrastructure                   |
+| `task stop_infra`       | Stop infrastructure                    |
+| `task db:migrate`       | Run migrations                         |
+| `task db:rollback`      | Rollback migrations                    |
+| `task build`            | Build all crates                       |
+| `task test`             | Run unit tests                         |
+| `task test:integration` | Run integration tests (requires Docker)|
+| `task test:doc`         | Run doc tests                          |
+| `task lint`             | Format + clippy                        |
+| `task deadcode`         | Check for dead code                    |
+| `task security`         | Security & license checks              |
+| `task unused_deps`      | Find unused dependencies               |
+| `task run_ci`           | Run the CI pipeline locally            |
+
+## Toolchain versions
+
+Every language and tool version lives in **`.prototools`** — one file, read by
+both `proto use` locally and `moonrepo/setup-toolchain` in CI. To upgrade a
+language, edit that one line.
 
 ## Technologies & Libraries
 
